@@ -97,3 +97,118 @@ The system combines original and synthetic rows first, then stratifies on the fi
 
 ### When should synthetic data be refreshed?
 It should be refreshed when the scenario library changes, when label definitions evolve, or when the model needs broader sequence coverage than the current synthetic set provides.
+## TensorFlow & Deep Learning Concepts
+
+### What is TensorFlow and why is it used in this project?
+TensorFlow is a deep learning framework used to build, train, save, and load the models in this repository. It is used here because the project needs neural network layers, training utilities, model serialization, and dataset pipelines in one consistent stack.
+
+### How is TensorFlow different from plain Python?
+Plain Python is a general programming language. TensorFlow adds optimized operations for matrix math, gradient-based training, neural network layers, and model execution on larger workloads. Python provides the control flow, while TensorFlow provides the deep learning engine.
+
+### What is Keras and how does it relate to TensorFlow?
+Keras is the high-level API used inside TensorFlow for defining models and layers. In this project, layers such as `Embedding`, `LSTM`, `Conv1D`, `Attention`, `Dense`, and callbacks such as `EarlyStopping` are all used through `tf.keras`.
+
+### What is a computational graph in simple terms?
+A computational graph is a structured way to represent how data moves through operations. In practice, it means TensorFlow can track how inputs pass through layers, compute predictions, measure loss, and work backward to update weights.
+
+### What is an epoch?
+An epoch is one full pass through the training dataset. If the training set has been fully seen once by the model, one epoch is complete.
+
+### What is batch size?
+Batch size is how many samples the model processes before updating its weights once. If the batch size is `16`, the model trains on 16 examples at a time.
+
+### How do epochs and batch size impact training?
+More epochs usually mean more learning opportunities, but they also increase training time and can increase overfitting if pushed too far. Batch size changes how often the model updates weights and how noisy those updates are.
+
+### Does increasing epochs make training faster or slower?
+Slower. More epochs mean the model goes through the dataset more times, so total training time increases.
+
+### What is a loss function and why is BinaryCrossentropy used?
+A loss function measures how wrong the model is during training. `BinaryCrossentropy` is used here because the task is binary classification: Material Risk vs Non-Material Risk.
+
+### What is an optimizer such as Adam?
+An optimizer controls how the model updates its weights after measuring loss. Adam is commonly used because it usually converges faster and more smoothly than simpler optimizers on many NLP tasks.
+
+### What are metrics like accuracy, precision, recall, and F1?
+Accuracy shows how often the prediction is correct overall. Precision shows how often predicted positives are actually positive. Recall shows how many real positives the model finds. F1 balances precision and recall in one score.
+
+### Why is F1 important in this repository?
+This system deals with class imbalance and adverse-risk detection, so accuracy alone can be misleading. F1 is useful because it reflects whether the model is actually finding material-risk cases without generating too many false positives.
+
+### What is an LSTM layer and how does it work?
+An LSTM is a recurrent layer designed for ordered data such as text. It processes tokens step by step and uses internal gates to decide what information to keep, update, or forget.
+
+### What is a bidirectional LSTM and why use it here?
+A bidirectional LSTM reads the sequence in both forward and backward directions. That helps the model understand a token using both earlier and later context in the sentence.
+
+### What is a CNN layer in the NLP context?
+A CNN layer in NLP scans across token embeddings to detect short local patterns. It is effective for phrases, fragments, and concentrated lexical signals such as sanctions, bribery, fraud, or money-laundering terms.
+
+### Why combine CNN and LSTM in TensorFlow instead of using only one branch?
+Using both branches gives the model two different views of the same text. CNN captures local phrase patterns, while LSTM captures progression and context across the sequence.
+
+### What is dropout and how does it affect training?
+Dropout randomly turns off part of the network during training. This makes the model less dependent on any single narrow pattern and helps reduce overfitting.
+
+### What is the attention layer and why was it added to the LSTM branch?
+The attention layer helps the model focus on the most relevant sequence regions instead of compressing everything into one final recurrent state. It was added to improve long-text understanding and strengthen the LSTM branch.
+
+### Why was LayerNormalization added before combining branch outputs?
+Normalization helps keep the LSTM and CNN feature representations on a more comparable scale. Without that, one branch can dominate the fusion mostly because of output magnitude rather than better reasoning.
+
+### Why was CNN dominating initially?
+The original setup made it easier for the CNN branch to react strongly to short adverse keywords, while the LSTM branch had much weaker output values. That caused the ensemble to lean too heavily on pattern matching.
+
+### What is learnable alpha in the ensemble?
+Learnable alpha is a trainable fusion weight that controls how much the final output depends on the LSTM branch versus the CNN branch. In this repository it is constrained with a sigmoid so it stays between 0 and 1.
+
+### Why do model outputs need calibration?
+A model can rank samples reasonably well but still produce scores that are too conservative or too aggressive for the chosen threshold. Calibration helps align raw output scores with practical decision boundaries.
+
+### Why can long sequences fail to increase LSTM contribution by themselves?
+Longer text does not automatically mean better sequence learning. If the extra tokens are noisy, repetitive, or weakly labeled, the LSTM may still contribute less unless the data and architecture support meaningful sequence patterns.
+
+### What is tf.data.Dataset?
+`tf.data.Dataset` is TensorFlow's input pipeline abstraction for feeding data into a model efficiently. It helps manage batching, shuffling, and prefetching in a clean training pipeline.
+
+### Why are batching and shuffling important?
+Batching keeps training efficient by processing multiple samples together. Shuffling reduces unwanted ordering effects so the model does not learn from accidental sample order patterns.
+
+### What does prefetching do?
+Prefetching prepares future batches while the model is still training on the current one. This helps reduce idle time in the input pipeline and keeps training more efficient.
+
+### How does tokenization work in TensorFlow in this project?
+The project uses a Keras `Tokenizer` to convert text into integer token IDs based on the training vocabulary. Those sequences are then padded to a consistent length so they can be fed into TensorFlow models.
+
+### Why is padding required?
+Neural network batches need consistent tensor shapes. Padding makes shorter sequences the same length as longer ones so they can be processed together.
+
+### Why is truncation used together with padding?
+Very long sequences can make training slower and harder to manage. Truncation limits sequence length so memory use and runtime stay controlled.
+
+### How does batch size impact model accuracy?
+There is no single rule. Smaller batches can make updates noisier but sometimes help generalization, while larger batches can be more stable and faster per epoch but may need different tuning.
+
+### Why specific layers like `Conv1D`, `GlobalMaxPooling1D`, and `Dense` were chosen?
+`Conv1D` captures local patterns, `GlobalMaxPooling1D` keeps the strongest activation from those patterns, and `Dense` layers turn learned features into branch-level risk scores. The combination is compact and effective for text classification.
+
+### Why is `GlobalAveragePooling1D` used after attention?
+After attention produces a contextualized sequence, global average pooling summarizes that sequence into a fixed-size vector. This gives a stable feature representation before the final LSTM branch scoring layer.
+
+### Why does the training pipeline use callbacks?
+Callbacks help automate training control and monitoring. In this project they are used for early stopping, learning-rate reduction, checkpoint saving, and structured epoch logging.
+
+### How is the training loop structured in this repository?
+The system builds the model, compiles it with loss and metrics, prepares datasets through the preprocessing pipeline, and then trains with `model.fit(...)` using callbacks and class weights.
+
+### Why are class weights used during training?
+Class weights increase the importance of the minority class during optimization. This helps the model pay more attention to material-risk examples when the dataset is imbalanced.
+
+### Why does TensorFlow need model compilation before training?
+Compilation tells TensorFlow which optimizer, loss function, and metrics to use. Without `model.compile(...)`, the framework would not know how to train or evaluate the model.
+
+### What does `return_sequences=True` do in the LSTM branch?
+It makes the LSTM return an output for every time step instead of only one final output. That is necessary here because the attention layer needs access to the full sequence representation.
+
+### How should explainability weights such as LSTM vs CNN contributions be interpreted?
+They should be read as branch influence indicators, not as direct proof of correctness. A higher contribution means a branch had more impact on the final prediction, but the prediction still needs to be judged in the context of score quality and threshold choice.
