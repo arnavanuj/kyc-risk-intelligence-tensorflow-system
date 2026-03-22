@@ -1,0 +1,48 @@
+{
+  "before": {
+    "accuracy": 0.8676470518112183,
+    "precision": 1.0,
+    "recall": 0.021739130839705467,
+    "f1_score": 0.002702698577195406,
+    "lstm_contribution": 0.0018763176334297808,
+    "cnn_contribution": 0.9981236823665702,
+    "source": "Existing validation/inference logs captured before the architecture refresh."
+  },
+  "after": {
+    "accuracy": 0.948559670781893,
+    "precision": 0.7058823529411765,
+    "recall": 0.782608695652174,
+    "f1_score": 0.7422680412371134,
+    "lstm_contribution": 0.32846540212631226,
+    "cnn_contribution": 0.6715345978736877,
+    "alpha": 0.32846540212631226,
+    "imbalance_warning": ""
+  },
+  "dataset_info": {
+    "dataset_type": "AllAgree",
+    "total_samples": 3234,
+    "class_distribution": {
+      "non_material_risk": 2931,
+      "material_risk": 303
+    },
+    "dataset_composition": {
+      "synthetic_enabled": true,
+      "synthetic_ratio_requested": 0.3,
+      "synthetic_ratio_actual": 0.29993815708101423,
+      "original_samples": 2264,
+      "synthetic_samples": 970,
+      "total_samples": 3234,
+      "synthetic_path": "data\\synthetic_adverse_media.csv"
+    },
+    "class_weight": {
+      "0": 0.5516821062896148,
+      "1": 5.337264150943396
+    }
+  },
+  "dataset_sizes": {
+    "train": 2263,
+    "validation": 485,
+    "test": 486
+  },
+  "history_rows": 8
+}

@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Syntax validation
+        run: |
+          python -m py_compile streamlit_app.py
+          python -m py_compile app/models/hybrid_model.py
+          python -m py_compile app/pipeline/preprocessing.py
+          python -m py_compile app/pipeline/training.py
+          python -m py_compile app/pipeline/inference.py
+          python -m py_compile scripts/generate_synthetic_dataset.py
+
+      - name: Preprocessing smoke test
+        run: |
+          python -c "from app.pipeline.preprocessing import load_synthetic_dataset; df=load_synthetic_dataset(); assert {'text','label','source'}.issubset(df.columns); assert df['label'].nunique() == 2; print({'rows': len(df), 'labels': df['label'].value_counts().to_dict()})"
